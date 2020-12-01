@@ -84,28 +84,23 @@ void XiaomiMiaoMiaoCeBT::init(uint8_t redraw)
     pinMode(EPD_TO_PC4, OUTPUT);
     pinMode(IO_BUSY_N, INPUT);
 
-    // set all outputs to 0
-    digitalWrite(SPI_ENABLE, LOW); 
+    // set all outputs to 1
+    digitalWrite(SPI_ENABLE, HIGH); 
+    digitalWrite(SPI_MOSI, HIGH);
+    digitalWrite(IO_RST_N, HIGH); 
+    digitalWrite(SPI_CLOCK, HIGH);
+    digitalWrite(EPD_TO_PC4, HIGH); 
+
     digitalWrite(SPI_MOSI, LOW);
-    digitalWrite(IO_RST_N, LOW); 
     digitalWrite(SPI_CLOCK, LOW);
-    digitalWrite(EPD_TO_PC4, LOW); 
-
-    // disable SPI (SPI enable is low active)
-    digitalWrite(SPI_ENABLE, HIGH);
-
-    // Set pin 8 (connected to MCU pin 17 - PC4) to high (after a short pulse to low)
-    digitalWrite(EPD_TO_PC4, HIGH);
-    delay(10);
-    digitalWrite(EPD_TO_PC4, LOW);
-    delay(80);
-    digitalWrite(EPD_TO_PC4, HIGH);
-    // after some delay set RST_N to 1
-    delayMicroseconds(110);
-    digitalWrite(IO_RST_N, HIGH);
 
     if(redraw)
     {
+        // pulse RST_N low for 110 microseconds
+        digitalWrite(IO_RST_N, LOW);
+        delayMicroseconds(110);
+        digitalWrite(IO_RST_N, HIGH);
+              
         // start an initialisation sequence (black - all 0xFF)
         send_sequence(T_LUTV_init, T_LUT_KK_init, T_LUT_KW_init, T_DTM_init, 1);
         // Original firmware pauses here for about 1500 ms
@@ -114,17 +109,27 @@ void XiaomiMiaoMiaoCeBT::init(uint8_t redraw)
         // but even without this delay the display seems to be working fine
         delay(2000);
 
+        // pulse RST_N low for 110 microseconds
+        digitalWrite(IO_RST_N, LOW);
+        delayMicroseconds(110);
+        digitalWrite(IO_RST_N, HIGH);
+
         // start an initialisation sequence (white - all 0x00)
         send_sequence(T_LUTV_init, T_LUT_KW_update, T_LUT_KK_update, T_DTM2_init, 1);
         // Original firmware pauses here for about 100 ms
         // in addition to display refresh busy signal.
         // Might be dedicated to sensor data aquisition
         // delay(100);
+              
+        // pulse RST_N low for 110 microseconds
+        digitalWrite(IO_RST_N, LOW);
+        delayMicroseconds(110);
+        digitalWrite(IO_RST_N, HIGH);
     }
     else
     {
         // Remove all black segments
-        send_sequence(T_LUTV_init, T_LUT_KW_update, T_LUT_KK_update, T_DTM2_init, 1);
+        //send_sequence(T_LUTV_init, T_LUT_KW_update, T_LUT_KK_update, T_DTM2_init, 1);
     }
     
 }
@@ -133,6 +138,7 @@ void XiaomiMiaoMiaoCeBT::send_sequence(uint8_t *dataV, uint8_t *dataKK,
                                      uint8_t *dataKW, uint8_t *data,
                                      uint8_t is_init)
 {
+/*
     if(is_init || transition)
     {
         // pulse RST_N low for 110 microseconds
@@ -140,7 +146,7 @@ void XiaomiMiaoMiaoCeBT::send_sequence(uint8_t *dataV, uint8_t *dataKK,
         delayMicroseconds(110);
         digitalWrite(IO_RST_N, HIGH);
     }
-
+*/
     // send Charge Pump ON command
     transmit(0, POWER_ON);
 
@@ -295,7 +301,7 @@ void XiaomiMiaoMiaoCeBT::transmit(uint8_t cd, uint8_t data_to_send)
         digitalWrite(SPI_MOSI, HIGH);
     else
         digitalWrite(SPI_MOSI, LOW);
-    delayMicroseconds(delay_SPI_clock_pulse);
+    delayMicroseconds(delay_SPI_clock_pulse * 2 + 1);
     digitalWrite(SPI_CLOCK, HIGH);
     delayMicroseconds(delay_SPI_clock_pulse);
 
@@ -311,7 +317,7 @@ void XiaomiMiaoMiaoCeBT::transmit(uint8_t cd, uint8_t data_to_send)
             digitalWrite(SPI_MOSI, LOW);
         // prepare for the next bit
         data_to_send = (data_to_send << 1);
-        delayMicroseconds(delay_SPI_clock_pulse);
+        delayMicroseconds(delay_SPI_clock_pulse * 2 + 1);
         // the data is read at rising clock (halfway the time MOSI is set)
         digitalWrite(SPI_CLOCK, HIGH);
         delayMicroseconds(delay_SPI_clock_pulse);
