@@ -74,17 +74,20 @@ The MCU updates the display 3 times on startup:
 
 1. MCU powers on
 2. After 100 ms, sets Display SHD_N high
-3. Update #1: Full black clear. This update turns on then off all black segments using special LUT values (see below for **Update Display Sequence**)
+3. Send low pulse on RST_N for 110 microseconds
+4. Update #1: Full black clear. This update turns on then off all black segments using special LUT values (see below for **Update Display Sequence**)
    - BUSY_N is low for about 3400 ms between after sending DRF
-4. Update #2: Full white clear. This update turns on then off all white segments using special LUT values (see below for **Update Display Sequence**)
+5. Send low pulse on RST_N for 110 microseconds
+6. Update #2: Full white clear. This update turns on then off all white segments using special LUT values (see below for **Update Display Sequence**)
    - BUSY_N is low for about 1950 ms between after sending DRF
-5. Update #3: Set all black segments on (except the background segment).
+7. Send low pulse on RST_N for 110 microseconds
+8. Update #3: Set all black segments on (except the background segment).
    - BUSY_N is low for about 1950 ms between after sending DRF
-6. Wait 100ms
-7. During this 100ms the MCU reads temp from Sensor
-8. Update #4: Set some black/white segments on/off (to show temp / humidity)
+9. Wait 100ms
+10. During this 100ms the MCU reads temp from Sensor
+11. Update #4: Set some black/white segments on/off (to show temp / humidity)
    - BUSY_N is low for about 1950 after DRF
-8. Sends final POWER_OFF command
+12. Sends final POWER_OFF command
 
 ### Update Display Sequence
 
